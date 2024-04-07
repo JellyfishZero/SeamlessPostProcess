@@ -9,6 +9,7 @@
 
 class UInputComponent;
 class USkeletalMeshComponent;
+class UStaticMeshComponent;
 class USceneComponent;
 class UCameraComponent;
 class UAnimMontage;
@@ -22,6 +23,9 @@ class ASeamlessPostProcessCharacter : public ACharacter
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
 	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
 	USkeletalMeshComponent* Mesh1P;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	UStaticMeshComponent* StaticMesh;
 
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -39,12 +43,17 @@ class ASeamlessPostProcessCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	class UInputAction* MoveAction;
 
+	UPROPERTY(Config)
+	TArray<FSoftObjectPath> TestAssets;
+
 	
 public:
 	ASeamlessPostProcessCharacter();
 
 protected:
 	virtual void BeginPlay();
+
+	void AnimAssetsDeferred();
 
 public:
 		

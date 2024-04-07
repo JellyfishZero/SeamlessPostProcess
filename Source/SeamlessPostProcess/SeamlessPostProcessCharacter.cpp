@@ -5,8 +5,12 @@
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -25,6 +29,9 @@ ASeamlessPostProcessCharacter::ASeamlessPostProcessCharacter()
 	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
 	FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.f, 0.f, 60.f)); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
+
+	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
+	StaticMesh->SetupAttachment(GetCapsuleComponent());
 
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
@@ -51,6 +58,31 @@ void ASeamlessPostProcessCharacter::BeginPlay()
 		}
 	}
 
+	for (FSoftObjectPath& Asset : TestAssets)
+	{
+		//GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Cyan, Asset.ToString());
+		UKismetSystemLibrary::PrintString(this, *FString::Printf(TEXT("%s"), *Asset.ToString()), true, true, FLinearColor(0.0, 0.66, 1.0), 20.f);
+	}
+
+	FStreamableManager& AssetLoader = UAssetManager::GetStreamableManager();
+	AssetLoader.RequestAsyncLoad(TestAssets, FStreamableDelegate::CreateUObject(this, &ASeamlessPostProcessCharacter::AnimAssetsDeferred));
+	//AnimAssetsDeferred();
+}
+
+void ASeamlessPostProcessCharacter::AnimAssetsDeferred()
+{
+	for (FSoftObjectPath SoftObj : TestAssets)
+	{
+		TSoftObjectPtr<UStaticMesh> AnimAsset(SoftObj);
+
+		UStaticMesh* StaticMeshObj = AnimAsset.Get();
+		if (StaticMeshObj)
+		{
+			//GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, AnimObj->GetName());
+			UKismetSystemLibrary::PrintString(this, *FString::Printf(TEXT("%s"), *StaticMeshObj->GetName()), true, true, FLinearColor(0.0, 0.66, 1.0), 20.f);
+			StaticMesh->SetStaticMesh(StaticMeshObj);
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
